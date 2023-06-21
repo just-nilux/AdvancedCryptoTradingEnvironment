@@ -1,0 +1,21 @@
+TODO: Implement data preprocessing: Add data preprocessing steps such as normalization or scaling of input features to ensure consistent ranges and improve model training.
+
+TODO: Explore additional features: Consider adding relevant features to the observation space, such as technical indicators (e.g., moving averages, relative strength index) or market sentiment data, to provide more information for the trading model.
+
+TODO: Optimize trade execution: Investigate and implement more efficient trade execution strategies, such as limit orders or market orders, to reduce slippage and transaction costs.
+
+TODO: Implement a custom reward function: Design a custom reward function that aligns with specific trading objectives, taking into account factors like risk-adjusted returns, drawdowns, or adherence to a particular trading strategy.
+
+TODO: Fine-tune hyperparameters: Experiment with different values for hyperparameters like n_past_prices, max_trades, and transaction_cost to find optimal values that suit the specific trading environment and desired trading behavior.
+
+TODO: Implement more advanced trading strategies: Consider integrating more sophisticated trading strategies into the environment, such as trend-following, mean-reversion, or machine learning-based strategies, to enhance the capabilities and performance of the trading model.
+
+TODO: Implement slippage and transaction costs: Include realistic slippage models and transaction cost estimations in the trading logic to better simulate real-world trading conditions and improve the accuracy of the environment.
+
+TODO: Implement a memory replay mechanism: Incorporate a memory replay mechanism, such as experience replay, to store and sample past experiences for more efficient and effective training of the trading model.
+
+TODO: Introduce randomness and exploration: Implement exploration mechanisms, such as epsilon-greedy or noise injection, to encourage exploration of different actions and prevent the model from getting stuck in suboptimal policies.
+
+TODO: Add logging and visualization: Implement logging functionality to record important metrics, such as portfolio value, profit, or trade history, during training. Additionally, incorporate visualization capabilities to analyze and visualize the performance of the trading agent over time.
+
+Remember to prioritize the TODOs based on your specific needs and objectives. Regular testing and iteration will be crucial to fine-tune the environment and achieve the desired trading outcomes.
