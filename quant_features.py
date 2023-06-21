@@ -28,6 +28,20 @@ def extract_wavelet_features(time_series):
 
     return feature_names, features
 
+from neuralprophet import NeuralProphet
+
+# Calculate the Neural Prophet model fit error as a measure of trend strength
+def calculate_trend_strength(data, window):
+    trend_strength = []
+    for i in range(window, len(data)):
+        model = NeuralProphet()
+        model_fit = model.fit(data[['timestamp', 'price']].iloc[i-window:i], freq='1D')
+        future = model.make_future_dataframe(data[['timestamp', 'price']].iloc[i-window:i], periods=1)
+        forecast = model.predict(future)
+        trend_strength.append(abs(forecast['yhat1'].values[-1] - data['price'].iloc[i]))
+    return pd.Series(trend_strength, index=data.index[window:])
+
+
 
 def save_features_to_csv(feature_names, features, filename):
     feature_df = pd.DataFrame([features], columns=feature_names)
