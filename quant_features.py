@@ -1,69 +1,48 @@
-import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-import yfinance as yf
-import pymc3 as pm
+import pandas as pd
+from scipy.fft import fft
+import pywt
 
-# Define the stock ticker symbol
-ticker = "BTCUSD"
+def extract_fourier_features(time_series):
+    # Perform Fourier transform
+    fourier_transform = fft(time_series)
+    magnitudes = np.abs(fourier_transform)
+    phases = np.angle(fourier_transform)
 
-# Fetch stock data from Yahoo Finance
-stock_data = yf.Ticker(ticker).history(period="max")
+    # Extract features
+    dominant_frequency = np.argmax(magnitudes)
+    power_spectrum = np.square(magnitudes)
+    feature_names = ['Dominant Frequency', 'Power Spectrum']
+    features = [dominant_frequency, power_spectrum]
 
-# Create the combined chart
-fig_combined = go.Figure()
+    return feature_names, features
 
-# Add the candlestick chart
-fig_combined.add_trace(go.Candlestick(x=stock_data.index,
-                                      open=stock_data['Open'],
-                                      high=stock_data['High'],
-                                      low=stock_data['Low'],
-                                      close=stock_data['Close'],
-                                      name='Candlestick'))
 
-# Add the volume chart
-fig_combined.add_trace(go.Bar(x=stock_data.index,
-                              y=stock_data['Volume'],
-                              name='Volume',
-                              marker_color='rgba(0, 0, 255, 0.3)'))
+def extract_wavelet_features(time_series):
+    # Perform wavelet transform
+    wavelet_coeffs, wavelet_scales = pywt.cwt(time_series, np.arange(1, 31), 'morl')
 
-# Perform Bayesian regression on the price and volume data
-price = stock_data['Close']
-volume = stock_data['Volume']
+    # Extract features
+    feature_names = ['Wavelet Coeff_' + str(scale) for scale in wavelet_scales]
+    features = wavelet_coeffs.T.tolist()
 
-with pm.Model() as model:
-    # Define priors for regression coefficients
-    alpha = pm.Normal('alpha', mu=0, sd=10)
-    beta = pm.Normal('beta', mu=0, sd=10)
+    return feature_names, features
 
-    # Define likelihood
-    mu = alpha + beta * volume
-    sigma = pm.HalfCauchy('sigma', beta=10)
-    price_observed = pm.Normal('price_observed', mu=mu, sd=sigma, observed=price)
 
-    # Perform inference
-    trace = pm.sample(2000, tune=1000, cores=1)
-    posterior = pm.sample_posterior_predictive(trace)
+def save_features_to_csv(feature_names, features, filename):
+    feature_df = pd.DataFrame([features], columns=feature_names)
+    feature_df.to_csv(filename, index=False)
 
-# Plot the Bayesian regression line
-x_range = np.linspace(volume.min(), volume.max(), 100)
-y_mean = trace['alpha'].mean() + trace['beta'].mean() * x_range
-y_hpd = pm.hpd(posterior['price_observed'], credible_interval=0.95)
 
-fig_combined.add_trace(go.Scatter(x=x_range, y=y_mean, name='Bayesian Regression'))
-fig_combined.add_trace(go.Scatter(x=np.concatenate([x_range, x_range[::-1]]),
-                                  y=np.concatenate([y_hpd[:, 0], y_hpd[:, 1][::-1]]),
-                                  fill='toself', fillcolor='rgba(0, 176, 246, 0.2)',
-                                  line_color='rgba(0, 176, 246, 0.4)',
-                                  name='95% Credible Interval'))
+# Example usage
+time_series = np.random.randn(1000)  # Replace with your own time series data
 
-# Configure the layout
-fig_combined.update_layout(
-    title='Price and Volume Over Time with Bayesian Regression',
-    xaxis_title='Date',
-    yaxis_title='Price',
-    showlegend=True
-)
+# Extract Fourier features
+fourier_feature_names, fourier_features = extract_fourier_features(time_series)
 
-# Show the combined chart
-fig_combined.show()
+# Extract Wavelet features
+wavelet_feature_names, wavelet_features = extract_wavelet_features(time_series)
+
+# Save features to CSV files
+save_features_to_csv(fourier_feature_names, fourier_features, 'fourier_features.csv')
+save_features_to_csv(wavelet_feature_names, wavelet_features, 'wavelet_features.csv')
