@@ -2,7 +2,6 @@ import gym
 from gym import spaces
 import numpy as np
 import pandas as pd
-import random
 
 
 class AdvancedCryptoTradingEnvironment(gym.Env):
@@ -49,8 +48,8 @@ class AdvancedCryptoTradingEnvironment(gym.Env):
         self.cash_balance = self.portfolio_value
         self.current_step = 0
         self.current_trade = 0
-        self.past_btc_prices = [self.df.loc[i, 'BTC Price'] for i in range(self.n_past_prices)]
-        self.past_eth_prices = [self.df.loc[i, 'ETH Price'] for i in range(self.n_past_prices)]
+        self.past_btc_prices = np.array(self.df.loc[:self.n_past_prices - 1, 'BTC Price'])
+        self.past_eth_prices = np.array(self.df.loc[:self.n_past_prices - 1, 'ETH Price'])
         return self._get_observation()
 
     def render(self, mode='human', close=False):
@@ -58,10 +57,12 @@ class AdvancedCryptoTradingEnvironment(gym.Env):
         print(f'Step: {self.current_step}, Portfolio Value: {self.portfolio_value}, Profit: {profit}')
 
     def _get_observation(self):
+        btc_prices = np.array(self.df.loc[self.current_step:self.current_step + self.n_past_prices - 1, 'BTC Price'])
+        eth_prices = np.array(self.df.loc[self.current_step:self.current_step + self.n_past_prices - 1, 'ETH Price'])
         btc_price = self.df.loc[self.current_step, 'BTC Price']
         eth_price = self.df.loc[self.current_step, 'ETH Price']
         obs = np.array([self.portfolio_value, self.btc_held, self.eth_held, self.cash_balance, btc_price,
-                        eth_price] + self.past_btc_prices + self.past_eth_prices)
+                        eth_price] + btc_prices.tolist() + eth_prices.tolist())
         return obs
 
     def _trade(self, action):
@@ -90,10 +91,8 @@ class AdvancedCryptoTradingEnvironment(gym.Env):
             self.cash_balance -= self.transaction_cost * self.cash_balance
 
         self.portfolio_value = self.cash_balance + self.btc_held * btc_price + self.eth_held * eth_price
-        self.past_btc_prices.append(btc_price)
-        self.past_eth_prices.append(eth_price)
-        self.past_btc_prices = self.past_btc_prices[-self.n_past_prices:]
-        self.past_eth_prices = self.past_eth_prices[-self.n_past_prices:]
+        self.past_btc_prices = np.append(self.past_btc_prices[1:], btc_price)
+        self.past_eth_prices = np.append(self.past_eth_prices[1:], eth_price)
         self.current_trade += 1
 
     def _get_reward(self):
